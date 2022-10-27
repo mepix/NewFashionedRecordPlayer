@@ -101,6 +101,10 @@ void drawColLength(int col[], int num){
       //strip.show();
     }
     strip.setPixelColor(idBot, RED);
+    if (abs(col[0]) - abs(idBot) > 1)
+    {
+      strip.setPixelColor(idBot+1, YELLOW);    
+    }
     //strip.show();
   }
   else //bottom pixel ID < top pixel ID
@@ -115,6 +119,10 @@ void drawColLength(int col[], int num){
       //strip.show();
     }
     strip.setPixelColor(idBot, RED);
+    if (abs(idBot) - abs(col[0]) > 1)
+    {
+      strip.setPixelColor(idBot-1, YELLOW);      
+    }
     //strip.show();
   }
   strip.show();
