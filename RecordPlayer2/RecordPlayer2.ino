@@ -26,6 +26,7 @@ uint32_t RED = 0x00FF00;
 uint32_t GREEN = 0xCC0000;
 //uint32_t ORANGE = 0xFF9900; NOT REALLY ORANGE?
 uint32_t BLUE = 0x0000FF;
+uint32_t YELLOW = 0xFFFF00;
 
 ///////////////////////////////////
 //*********** GLOBALS ***********//
@@ -96,7 +97,7 @@ void drawColLength(int col[], int num){
     }
     for(; idBot > idTop; idBot--)
     {
-      strip.setPixelColor(idBot, GREEN);
+      strip.setPixelColor(idBot, BLUE);
       //strip.show();
     }
     strip.setPixelColor(idBot, RED);
@@ -110,7 +111,7 @@ void drawColLength(int col[], int num){
         idTop = col[1];
     for(; idBot < idTop; idBot++)
     {
-      strip.setPixelColor(idBot, GREEN);
+      strip.setPixelColor(idBot, BLUE);
       //strip.show();
     }
     strip.setPixelColor(idBot, RED);
