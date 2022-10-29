@@ -9,7 +9,7 @@
 
 #define SERIAL_DEBUG true
 
-#define FILTER_NUM_SAMPLES 20
+#define FILTER_NUM_SAMPLES 10
 #define FILTER_THRESH 1
 movingAvg filter(FILTER_NUM_SAMPLES);
 
@@ -81,11 +81,11 @@ void loop() {
   startTime = millis();
   sampleInput();
   sampleFix();
-  if (noAudioPlaying()){
-    drawWaitPattern();
-  } else {
+//  if (noAudioPlaying()){
+//    drawWaitPattern();
+//  } else {
     drawSpectrum();  
-  }
+//  }
 
 #if SERIAL_DEBUG
   Serial.print(sample[0]);
