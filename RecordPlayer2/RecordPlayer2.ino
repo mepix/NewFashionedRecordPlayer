@@ -1,10 +1,16 @@
 #define LIN_OUT 1
 #define FHT_N 128 // set to 256 point fht
 
+#include <movingAvg.h>
 #include <Adafruit_DotStar.h>
 #include <SPI.h>
 #include <FHT.h>
 #include <TimerOne.h>
+
+#define SERIAL_DEBUG true
+
+#define NUM_FILTER_SAMPLES 100
+movingAvg filter(NUM_FILTER_SAMPLES);
 
 #define NUMPIXELS 101 // Number of LEDs in the strip
 #define DATAPIN 4 // From ADAFRUIT standard
@@ -47,6 +53,14 @@ int RowT[2] = {49,42};
 ////////////////////////////??///////
 
 void setup() {
+
+#if SERIAL_DEBUG
+  Serial.begin(9600);
+#endif
+
+  //Setup Moving Average Filter to check if audio is playing
+  filter.begin();
+  
   //Setup DOTSTARs
   #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000L)
   clock_prescale_set(clock_div_1); // Enable 16 MHz on Trinket
@@ -72,7 +86,11 @@ void loop() {
   startTime = millis();
   sampleInput();
   sampleFix();
-  drawSpectrum();
+  if (noAudioPlaying()){
+    drawWaitPattern();
+  } else {
+    drawSpectrum();  
+  }
  // delay(200);
   endTime = millis();
 }
@@ -128,6 +146,70 @@ void drawColLength(int col[], int num){
   strip.show();
 }
 
+unsigned long timeSinceNoSample = 0;
+unsigned long timeNoAudio = 0;
+
+bool noAudioPlaying(){
+
+  // scan the sample bins and sum the levels
+  int lvlCount = 0;
+  for (int n = 0; n < displaySize; n++){
+    lvlCount += sample[n];
+  }
+
+  // add the bin capacity to the filter
+  int val = filter.reading(lvlCount);
+
+#if SERIAL_DEBUG
+  Serial.println(val, DEC);
+#endif
+  
+  return val < 1;
+  
+}
+
+bool noAudioPlaying2(){
+  static unsigned long lastTime = 0;
+  static unsigned long noAudioTime = 0;
+  unsigned long nowTime = millis();
+  bool noAudio = true;
+
+  // Check if ALL sample bins are low -> no audio playing
+  for (int n = 0; n < displaySize; n++){
+    if (sample[n] > 1){
+      // there must be audio playing
+//      noAudioTime = 0;
+      return false;
+    }
+  }
+  return true;
+
+  // There is some noise that occurs within signal
+  // We need to check that there has been a long
+  // enough pause to indicate that that music has
+  // realy stopped
+
+  // Update the timer if it is the first time here
+  if (noAudioTime == 0){
+    noAudioTime = millis(); 
+  }
+
+  //TODO: there is something wrong with this timer part
+  
+  if (noAudioTime - millis() > 5000){
+    return true;
+  } else {
+    return false;
+  }
+
+}
+
+void drawWaitPattern(){
+  for (int n = 0; n < NUMPIXELS; n++){
+        strip.setPixelColor(n, GREEN);
+  }
+  strip.show();
+}
 
 void drawCol(int col[]){
   if (col[0] > col[1])
