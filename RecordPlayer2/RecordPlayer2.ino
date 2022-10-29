@@ -7,7 +7,7 @@
 #include <FHT.h>
 #include <TimerOne.h>
 
-#define SERIAL_DEBUG false
+#define SERIAL_DEBUG true
 
 #define FILTER_NUM_SAMPLES 20
 #define FILTER_THRESH 1
@@ -77,22 +77,24 @@ void setup() {
 }
 
 void loop() {
-//  drawCol(Col1);
-//  drawCol(Col2);
-//  drawCol(Col3);
-//  drawCol(Col4);
-//  drawCol(Col5);
-//  delay(20);
 
   startTime = millis();
   sampleInput();
   sampleFix();
-//  if (noAudioPlaying()){
-//    drawWaitPattern();
-//  } else {
+  if (noAudioPlaying()){
+    drawWaitPattern();
+  } else {
     drawSpectrum();  
-//  }
- // delay(200);
+  }
+
+#if SERIAL_DEBUG
+  Serial.print(sample[0]);
+  Serial.print(sample[1]);
+  Serial.print(sample[2]);
+  Serial.print(sample[3]);
+  Serial.println(sample[4]);
+#endif
+
   endTime = millis();
 }
 
@@ -167,42 +169,15 @@ bool noAudioPlaying(){
 }
 
 void drawWaitPattern(){
-
-//  drawEdges();
-//  drawRainbow(0);
-//  drawCurtain();
-  
-//  for (int n = 0; n < NUMPIXELS; n++){
-//        strip.setPixelColor(n, GREEN);
-//  }
-//  strip.show();
+  for(int i = 0; i < NUMPIXELS; i++){
+    if (i % 3 == 0){
+      strip.setPixelColor(i, YELLOW);
+    } else {
+      strip.setPixelColor(i, BLUE);
+    }
+  }
+  strip.show();
 }
-
-//void drawCol(int col[]){
-//  if (col[0] > col[1])
-//  {
-//    int n = col[0];
-//    for(; n > col[1]; n--)
-//    {
-//      strip.setPixelColor(n, GREEN);
-//      strip.show();
-//    }
-//    strip.setPixelColor(n, RED);
-//    strip.show();
-//  }
-//  else
-//  {
-//    int n = col[0];
-//    for(; n < col[1]; n++)
-//    {
-//      strip.setPixelColor(n, GREEN);
-//      strip.show();
-//    }
-//    strip.setPixelColor(n, RED);
-//    strip.show();
-//  }
-//  
-//}
 
 void sampleInput() {
   cli();  // UDRE interrupt slows this way down on arduino1.0
