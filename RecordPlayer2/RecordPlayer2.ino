@@ -7,10 +7,11 @@
 #include <FHT.h>
 #include <TimerOne.h>
 
-#define SERIAL_DEBUG true
+#define SERIAL_DEBUG false
 
-#define NUM_FILTER_SAMPLES 100
-movingAvg filter(NUM_FILTER_SAMPLES);
+#define FILTER_NUM_SAMPLES 20
+#define FILTER_THRESH 1
+movingAvg filter(FILTER_NUM_SAMPLES);
 
 #define NUMPIXELS 101 // Number of LEDs in the strip
 #define DATAPIN 4 // From ADAFRUIT standard
@@ -86,11 +87,11 @@ void loop() {
   startTime = millis();
   sampleInput();
   sampleFix();
-  if (noAudioPlaying()){
-    drawWaitPattern();
-  } else {
+//  if (noAudioPlaying()){
+//    drawWaitPattern();
+//  } else {
     drawSpectrum();  
-  }
+//  }
  // delay(200);
   endTime = millis();
 }
@@ -146,9 +147,6 @@ void drawColLength(int col[], int num){
   strip.show();
 }
 
-unsigned long timeSinceNoSample = 0;
-unsigned long timeNoAudio = 0;
-
 bool noAudioPlaying(){
 
   // scan the sample bins and sum the levels
@@ -164,78 +162,47 @@ bool noAudioPlaying(){
   Serial.println(val, DEC);
 #endif
   
-  return val < 1;
+  return val < FILTER_THRESH;
   
-}
-
-bool noAudioPlaying2(){
-  static unsigned long lastTime = 0;
-  static unsigned long noAudioTime = 0;
-  unsigned long nowTime = millis();
-  bool noAudio = true;
-
-  // Check if ALL sample bins are low -> no audio playing
-  for (int n = 0; n < displaySize; n++){
-    if (sample[n] > 1){
-      // there must be audio playing
-//      noAudioTime = 0;
-      return false;
-    }
-  }
-  return true;
-
-  // There is some noise that occurs within signal
-  // We need to check that there has been a long
-  // enough pause to indicate that that music has
-  // realy stopped
-
-  // Update the timer if it is the first time here
-  if (noAudioTime == 0){
-    noAudioTime = millis(); 
-  }
-
-  //TODO: there is something wrong with this timer part
-  
-  if (noAudioTime - millis() > 5000){
-    return true;
-  } else {
-    return false;
-  }
-
 }
 
 void drawWaitPattern(){
-  for (int n = 0; n < NUMPIXELS; n++){
-        strip.setPixelColor(n, GREEN);
-  }
-  strip.show();
+
+//  drawEdges();
+//  drawRainbow(0);
+//  drawCurtain();
+  
+//  for (int n = 0; n < NUMPIXELS; n++){
+//        strip.setPixelColor(n, GREEN);
+//  }
+//  strip.show();
 }
 
-void drawCol(int col[]){
-  if (col[0] > col[1])
-  {
-    int n = col[0];
-    for(; n > col[1]; n--)
-    {
-      strip.setPixelColor(n, GREEN);
-      strip.show();
-    }
-    strip.setPixelColor(n, RED);
-    strip.show();
-  }
-  else
-  {
-    int n = col[0];
-    for(; n < col[1]; n++)
-    {
-      strip.setPixelColor(n, GREEN);
-      strip.show();
-    }
-    strip.setPixelColor(n, RED);
-    strip.show();
-  }
-  
-}
+//void drawCol(int col[]){
+//  if (col[0] > col[1])
+//  {
+//    int n = col[0];
+//    for(; n > col[1]; n--)
+//    {
+//      strip.setPixelColor(n, GREEN);
+//      strip.show();
+//    }
+//    strip.setPixelColor(n, RED);
+//    strip.show();
+//  }
+//  else
+//  {
+//    int n = col[0];
+//    for(; n < col[1]; n++)
+//    {
+//      strip.setPixelColor(n, GREEN);
+//      strip.show();
+//    }
+//    strip.setPixelColor(n, RED);
+//    strip.show();
+//  }
+//  
+//}
 
 void sampleInput() {
   cli();  // UDRE interrupt slows this way down on arduino1.0
