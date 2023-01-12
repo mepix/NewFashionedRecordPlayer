@@ -31,7 +31,7 @@ int displaySize = 5;
 //Bits are GRB
 uint32_t RED = 0x00FF00;
 uint32_t GREEN = 0xCC0000;
-//uint32_t ORANGE = 0xFF9900; NOT REALLY ORANGE?
+uint32_t ORANGE = 0xFF9900; //NOT REALLY ORANGE?
 uint32_t BLUE = 0x0000FF;
 uint32_t YELLOW = 0xFFFF00;
 
@@ -49,31 +49,41 @@ int Col5[2] = {25,41};
 int RowB[2] = {17,24};
 int RowT[2] = {49,42};
 
-/////////////////////////???/////////
+//////////////////////////////////////
 //*********** FUNCTIONS ***********//
-////////////////////////////??///////
+/////////////////////////////////////
 
 void setup() {
 
 #if SERIAL_DEBUG
+  Serial.println("VOID_SETUP::START");
   Serial.begin(9600);
 #endif
 
-  //Setup Moving Average Filter to check if audio is playing
+  // Setup Moving Average Filter to check if audio is playing
   filter.begin();
-  
+
+  // Setup digital pin LED_BUILTIN as an output.
+  pinMode(LED_BUILTIN, OUTPUT);
+
   //Setup DOTSTARs
   #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000L)
   clock_prescale_set(clock_div_1); // Enable 16 MHz on Trinket
   #endif
 
   strip.begin(); // Initialize pins for output
+  strip.clear(); // Turn all LEDs off
   strip.show();  // Turn all LEDs off 
 
   //Setup FFT
   ADCSRA = 0xe7; // set the adc to free running mode
   ADMUX = 0x45; // use adc5
   DIDR0 = 0x20; // turn off the digital input for adc5
+
+#if SERIAL_DEBUG
+  Serial.println("VOID_SETUP::COMPLETE");
+  Serial.begin(9600);
+#endif
 }
 
 void loop() {
@@ -81,17 +91,20 @@ void loop() {
   startTime = millis();
   sampleInput();
   sampleFix();
-//  if (noAudioPlaying()){
-//    drawWaitPattern();
-//  } else {
-    drawSpectrum();  
-//  }
+  
+  if (noAudioPlaying()){
+    drawWaitPattern();
+    digitalWrite(LED_BUILTIN, HIGH); //ON
+  } else {
+    drawSpectrum();
+    digitalWrite(LED_BUILTIN, LOW); //OFF
+  }
 
 #if SERIAL_DEBUG
-  Serial.print(sample[0]);
-  Serial.print(sample[1]);
-  Serial.print(sample[2]);
-  Serial.print(sample[3]);
+  Serial.print(sample[0]); Serial.print(",");
+  Serial.print(sample[1]); Serial.print(",");
+  Serial.print(sample[2]); Serial.print(",");
+  Serial.print(sample[3]); Serial.print(",");
   Serial.println(sample[4]);
 #endif
 
@@ -149,6 +162,18 @@ void drawColLength(int col[], int num){
   strip.show();
 }
 
+
+void drawWaitPattern(){
+  for(int i = 0; i < NUMPIXELS; i++){
+    if (i % 3 == 0){
+      strip.setPixelColor(i, YELLOW);
+    } else {
+      strip.setPixelColor(i, BLUE);
+    }
+  }
+  strip.show();
+}
+
 bool noAudioPlaying(){
 
   // scan the sample bins and sum the levels
@@ -168,16 +193,9 @@ bool noAudioPlaying(){
   
 }
 
-void drawWaitPattern(){
-  for(int i = 0; i < NUMPIXELS; i++){
-    if (i % 3 == 0){
-      strip.setPixelColor(i, YELLOW);
-    } else {
-      strip.setPixelColor(i, BLUE);
-    }
-  }
-  strip.show();
-}
+//********************//
+// SAMPLING FUNCTIONS //
+//********************//
 
 void sampleInput() {
   cli();  // UDRE interrupt slows this way down on arduino1.0
