@@ -12,6 +12,7 @@
 #define FILTER_NUM_SAMPLES 10
 #define FILTER_THRESH 1
 movingAvg filter(FILTER_NUM_SAMPLES);
+int filter_val_now = 0;
 
 #define NUMPIXELS 101 // Number of LEDs in the strip
 #define DATAPIN 4 // From ADAFRUIT standard
@@ -21,7 +22,8 @@ Adafruit_DotStar strip = Adafruit_DotStar(
   NUMPIXELS, DATAPIN, CLOCKPIN, DOTSTAR_BRG);
 
 byte sample[64];
-unsigned long startTime, endTime, oldTime;
+unsigned long time_now, time_then;
+int time_interval = 5; //ms
 String sampleSet;
 int displaySize = 5;
 
@@ -88,28 +90,50 @@ void setup() {
 
 void loop() {
 
-  startTime = millis();
-  sampleInput();
-  sampleFix();
-  
-  if (noAudioPlaying()){
-    drawWaitPattern();
-    digitalWrite(LED_BUILTIN, HIGH); //ON
-  } else {
-    drawSpectrum();
-    digitalWrite(LED_BUILTIN, LOW); //OFF
+  time_now = millis();
+  if (time_now - time_then > time_interval){
+
+    // Analyze the Audio Data
+    sampleInput();
+    sampleFix();
+
+    // illuminate the appropriate LEDs
+    if (noAudioPlaying()){
+      drawWaitPattern();
+      digitalWrite(LED_BUILTIN, HIGH); //ON
+    } else {
+      drawSpectrum();
+      digitalWrite(LED_BUILTIN, LOW); //OFF
+    }  
   }
 
+  // Issue a debug message
+  send_debug_msg();
+
+  // Update Timer
+  time_then = time_now;
+}
+
+void send_debug_msg(){
 #if SERIAL_DEBUG
-  Serial.print(sample[0]); Serial.print(",");
-  Serial.print(sample[1]); Serial.print(",");
-  Serial.print(sample[2]); Serial.print(",");
-  Serial.print(sample[3]); Serial.print(",");
-  Serial.println(sample[4]);
+  //Sample Bins
+  Serial.print(sample[0]); Serial.print(", ");
+  Serial.print(sample[1]); Serial.print(", ");
+  Serial.print(sample[2]); Serial.print(", ");
+  Serial.print(sample[3]); Serial.print(", ");
+  Serial.print(sample[4]); Serial.print(",");
+  
+  //Running Average Filter
+  Serial.print("  |  ");
+  Serial.println(filter_val_now, DEC);
 #endif
 
-  endTime = millis();
+  
 }
+
+//***************//
+// LED FUNCTIONS //
+//***************//
 
 void drawSpectrum(){
   strip.clear();
@@ -142,7 +166,7 @@ void drawColLength(int col[], int num){
     //strip.show();
   }
   else //bottom pixel ID < top pixel ID
-  { //
+  {
     int idBot = col[0];
     int idTop = col[1] - (16-sample[num]);
     if(idTop > col[1])
@@ -174,6 +198,10 @@ void drawWaitPattern(){
   strip.show();
 }
 
+//*********************//
+// FILTERING FUNCTIONS //
+//*********************//
+
 bool noAudioPlaying(){
 
   // scan the sample bins and sum the levels
@@ -183,13 +211,9 @@ bool noAudioPlaying(){
   }
 
   // add the bin capacity to the filter
-  int val = filter.reading(lvlCount);
+  filter_val_now = filter.reading(lvlCount);
 
-#if SERIAL_DEBUG
-  Serial.println(val, DEC);
-#endif
-  
-  return val < FILTER_THRESH;
+  return filter_val_now < FILTER_THRESH;
   
 }
 
