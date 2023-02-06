@@ -38,7 +38,7 @@ int displaySize = 5;
 //Bits are GRB
 uint32_t RED = 0x00FF00;
 uint32_t GREEN = 0xCC0000;
-uint32_t ORANGE = 0xFF9900; //NOT REALLY ORANGE?
+uint32_t ORANGE = 0xFF9900;
 uint32_t BLUE = 0x0000FF;
 uint32_t YELLOW = 0xFFFF00;
 
@@ -82,9 +82,6 @@ void setup() {
   strip.begin(); // Initialize pins for output
   strip.clear(); // Turn all LEDs off
 
-  //TODO: this is introducing a bug... so I turn it off here
-  //  strip.show();  // Turn all LEDs off
-
   //Setup FFT
   ADCSRA = 0xe7; // set the adc to free running mode
   ADMUX = 0x45; // use adc5
@@ -124,7 +121,6 @@ void set_music_on() {
 void set_music_off() {
 
   //  digitalWrite(LED_BUILTIN, LOW); //OFF
-
   drawWaitPattern();
 
 #if SERIAL_DEBUG
@@ -159,14 +155,12 @@ void drawColLength(int col[], int num) {
     for (; idBot > idTop; idBot--)
     {
       strip.setPixelColor(idBot, BLUE);
-      //strip.show();
     }
     strip.setPixelColor(idBot, RED);
     if (abs(col[0]) - abs(idBot) > 1)
     {
       strip.setPixelColor(idBot + 1, YELLOW);
     }
-    //strip.show();
   }
   else //bottom pixel ID < top pixel ID
   {
@@ -177,14 +171,12 @@ void drawColLength(int col[], int num) {
     for (; idBot < idTop; idBot++)
     {
       strip.setPixelColor(idBot, BLUE);
-      //strip.show();
     }
     strip.setPixelColor(idBot, RED);
     if (abs(idBot) - abs(col[0]) > 1)
     {
       strip.setPixelColor(idBot - 1, YELLOW);
     }
-    //strip.show();
   }
   strip.show();
 }
